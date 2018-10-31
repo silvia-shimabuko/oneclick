@@ -1,4 +1,4 @@
-ARG DXP_IMAGE=liferay/liferay-dxp:7.1.10
+ARG DXP_IMAGE='GET FROM ARGUMENT'
 FROM $DXP_IMAGE
 
 ADD ./patches /docker-init.d/patches

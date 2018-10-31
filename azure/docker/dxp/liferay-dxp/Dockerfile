@@ -41,10 +41,11 @@ RUN \
   mkdir -p /docker-init.d && \
   mkdir -p $LIFERAY_HOME && \
   unzip /tmp/$DXP_FILENAME -d /tmp/liferay && \
-  mv /tmp/liferay/liferay-*/* $LIFERAY_HOME/ && \
+  mv /tmp/liferay/* $LIFERAY_HOME/ && \
   mv $LIFERAY_HOME/tomcat-* $CATALINA_HOME && \
   cp -r $LIFERAY_HOME/data /docker-init.d/data && \
   chmod +x $CATALINA_HOME/bin/*.sh && \
+  cd $LIFERAY_HOME && mkdir patching-tool && cd patching-tool && touch default.properties && \
   echo "patching.mode=binary\n\
 war.path=$LIFERAY_HOME/tomcat/webapps/ROOT/\n\
 global.lib.path=$LIFERAY_HOME/tomcat/lib/ext/\n\

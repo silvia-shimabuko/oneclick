@@ -36,8 +36,6 @@ cry_if_absent() {
 }
 
 build_image() {
-  echo "execute this command - silvia"
-  echo "docker build --build-arg DXP_FILENAME=$DXP_FILENAME --tag $IMAGE_PREFIX/$IMAGE_NAME:$IMAGE_TAG $DIR"
   docker build --build-arg "DXP_FILENAME=$DXP_FILENAME" --tag "$IMAGE_PREFIX/$IMAGE_NAME:$IMAGE_TAG" $DIR
 }
 

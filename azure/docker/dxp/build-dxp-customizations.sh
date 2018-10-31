@@ -13,7 +13,7 @@ echo "NAME_VERSION_ZIP $NAME_VERSION_ZIP"
 liferay-dxp/build-image.sh  $NAME_VERSION_ZIP
 
 echo "# Building the patched image"
-liferay-dxp-patches/build-image.sh
+liferay-dxp-patches/build-image.sh $NAME_VERSION_ZIP
 
 echo "# Building the customized portal"
-liferay-dxp-customizations/build.sh $VERSION
+liferay-dxp-customizations/build.sh $VERSION $NAME_VERSION_ZIP
