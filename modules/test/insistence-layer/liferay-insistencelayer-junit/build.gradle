@@ -1,0 +1,9 @@
+dependencies {
+    compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
+    compileOnly group: "com.liferay.portal", name: "com.liferay.portal.test", version: "3.0.0"
+    compileOnly group: "com.liferay", name: "com.liferay.osgi.util", version: "3.0.0"
+    compileOnly group: "com.liferay.portal", name: "com.liferay.portal.test.integration", version: "3.0.0"
+    compileOnly project(':modules:test:insistence-layer:liferay-insistencelayer-jdbc')
+    compileOnly group: 'junit', name: 'junit', version: '4.12'
+    compileOnly group: "com.liferay", name: "com.liferay.arquillian.extension.junit.bridge", version: "1.0.7"
+}

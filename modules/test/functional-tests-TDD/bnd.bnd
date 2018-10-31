@@ -1,0 +1,3 @@
+Bundle-Name: Sample TDD Functional Tests
+Bundle-SymbolicName: com.sample.tdd.functional
+Bundle-Version: 1.0.0

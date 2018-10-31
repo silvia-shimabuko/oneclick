@@ -1,0 +1,15 @@
+.gradle/
+build/
+target/
+/bin/
+
+**.project
+**.classpath
+**.class
+**.settings/
+**.gradle/
+**/reports/
+**/bin/
+**/build/
+**/tempDeployFiles/
+**/node_modules/

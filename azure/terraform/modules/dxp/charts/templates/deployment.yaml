@@ -1,0 +1,79 @@
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: liferay
+  labels:
+    run: liferay
+spec:
+  selector:
+      matchLabels:
+        run: liferay
+  replicas: {{ .Values.liferay.replicas }}
+  template:
+    metadata:
+      labels:
+        run: liferay
+    spec:
+      containers:
+      - name: proxy-httpd
+        image: {{ .Values.proxy.image }}
+        imagePullPolicy: Always
+        env:
+        - name: PROXY_TARGET
+          value: localhost
+        - name: PROXY_TARGET_HTTP_PORT
+          value: "8080"
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        - name: ssl
+          containerPort: 443
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /certs
+          name: proxy-storage
+
+      - name: liferay
+        image: {{ .Values.liferay.image }}
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "14Gi"
+            cpu: "1.5"
+        readinessProbe:
+          httpGet:
+            path: /c/portal/login
+            port: 8080
+          initialDelaySeconds: 30
+          timeoutSeconds: 15
+          periodSeconds: 30
+        {{- if (.Values.liferay.environment) }}
+        env:
+          {{- range $kvp := .Values.liferay.environment }}
+          - name: {{ $kvp.key }}
+            value: {{ $kvp.value }}
+          {{- end }}
+        {{- end }}
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /opt/liferay/data/document_library
+          name: az-storage
+        - mountPath: /opt/liferay/userconfig
+          name: dxp-userconfig
+
+      dnsPolicy: ClusterFirst
+      volumes:
+      - name: az-storage
+        persistentVolumeClaim:
+          claimName: liferay-files
+      - name: proxy-storage
+        persistentVolumeClaim:
+          claimName: proxy-files
+      - name: dxp-userconfig
+        configMap:
+          name: dxp-userconfig

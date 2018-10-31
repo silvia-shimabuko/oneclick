@@ -1,0 +1,11 @@
+dependencies {
+	compile group: "com.liferay", name: "com.liferay.arquillian.extension.junit.bridge", version: "1.0.7"
+	compile group: "com.liferay", name: "com.liferay.asset.publisher.web", version: "default"
+	compile group: "com.liferay", name: "com.liferay.journal.api", version: "default"
+	compile group: "com.liferay", name: "com.liferay.osgi.util", version: "default"
+	compile group: "com.liferay.portal", name: "com.liferay.portal.impl", version: "default"
+	compile group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
+	compile group: "com.liferay.portal", name: "com.liferay.portal.test", version: "default"
+	compile group: "com.liferay.portal", name: "com.liferay.portal.test.integration", version: "default"
+	compile group: "javax.inject", name: "javax.inject", version: "1"
+}

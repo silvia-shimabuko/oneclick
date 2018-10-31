@@ -1,0 +1,69 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
+jar.enabled = false
+
+group = 'com.liferay.sample'
+version = '1.0.0-SNAPSHOT'
+
+description = """Sample Integration Test Module"""
+
+dependencies {
+	compile project(":modules:samplePortlet")
+
+	testIntegrationCompile group: "com.liferay", name: "com.liferay.arquillian.extension.junit.bridge", version: "1.0.7"
+	testIntegrationCompile group: "com.liferay", name: "com.liferay.dynamic.data.lists.api", version: "2.1.7"
+	testIntegrationCompile group: "com.liferay", name: "com.liferay.dynamic.data.lists.form.web", version: "1.0.10"
+	testIntegrationCompile group: "com.liferay", name: "com.liferay.osgi.util", version: "default"
+	testIntegrationCompile group: "com.liferay", name: "com.liferay.portal.configuration.metatype", version: "2.0.0"
+	testIntegrationCompile group: "com.liferay.portal", name: "com.liferay.portal.impl", version: "default"
+	testIntegrationCompile group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
+	testIntegrationCompile group: "org.springframework", name: "spring-core", version: "4.2.5.RELEASE"
+	testIntegrationCompile project(":modules:test:integration-tests:test-utils")
+
+	testIntegrationRuntime group: "com.liferay", name: "com.liferay.petra.concurrent", version: "1.1.2"
+	testIntegrationRuntime group: "com.liferay", name: "com.liferay.petra.lang", version: "1.1.0"
+	testIntegrationRuntime group: "com.liferay", name: "com.liferay.petra.memory", version: "1.0.1"
+}
+
+tasks.withType(Test) {
+	testLogging {
+		events "passed", "skipped", "failed"
+		showExceptions true
+		exceptionFormat "short"
+		showCauses true
+		showStackTraces true
+
+		afterSuite { desc, result ->
+			if (!desc.parent) {
+				def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+				def startItem = '|  ', endItem = '  |'
+				def repeatLength = startItem.length() + output.length() + endItem.length()
+				println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+			}
+		}
+	}
+}
+
+tasks.withType(Test) {
+	reports.html.destination = file("${reporting.baseDir}/${name}")
+}
+
+task setupIntegrationTest {
+	description 'Create the Integration Tests properties, but only work if run on project root folder.'
+
+	doLast {
+		def baseDir = "${project.hasProperty('liferay.workspace.home.dir') ? project.property('liferay.workspace.home.dir') : 'modules'}"
+		def SeleniumPropertyKeysPath = new File('modules/test/integration-tests/sample-integration-tests/SeleniumProperties')
+		def SeleniumPropertyKeysFile = new File('modules/test/integration-tests/sample-integration-tests/SeleniumProperties/SeleniumPropertyKeys.properties')
+		println "You should run this task only on your project root folder"
+		if (!SeleniumPropertyKeysFile.exists()) {
+			println "Create Configuration for use a local SeleniumPropertyKeys.properties"
+			SeleniumPropertyKeysPath.mkdirs()
+			SeleniumPropertyKeysFile.withWriterAppend { w ->
+				w << "environment=http://localhost:8080\nusername=test@liferay.com\npassword=!r3m3mb3r\$\nbrowser=defaultGCHeadless"
+			}
+		} else {
+			println "You already had the local SeleniumPropertyKeys.properties created"
+		}
+	}
+}

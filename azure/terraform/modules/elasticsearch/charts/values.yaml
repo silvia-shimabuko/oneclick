@@ -1,0 +1,83 @@
+appVersion: "6.1.4"
+
+image:
+  repository: "docker.io/liferay/lfrgs-liferay-elasticsearch"
+  tag: "6.1.4"
+  pullPolicy: "IfNotPresent"
+
+cluster:
+  name: "elasticsearch"
+  kubernetesDomain: cluster.local
+  xpackEnable: false
+  config:
+  env:
+    MINIMUM_MASTER_NODES: "1"
+
+client:
+  name: client
+  replicas: 2
+  serviceType: ClusterIP
+  heapSize: "512m"
+  antiAffinity: "soft"
+  nodeSelector: {}
+  tolerations: {}
+  resources:
+    limits:
+      cpu: "1"
+    requests:
+      cpu: "25m"
+      memory: "512Mi"
+  priorityClassName: ""
+  podDisruptionBudget:
+    enabled: false
+    minAvailable: 1
+
+master:
+  name: master
+  exposeHttp: false
+  replicas: 1
+  serviceType: ClusterIP
+  heapSize: "512m"
+  persistence:
+    enabled: true
+    accessMode: ReadWriteOnce
+    name: data
+    size: "4Gi"
+  antiAffinity: "soft"
+  nodeSelector: {}
+  tolerations: {}
+  resources:
+    limits:
+      cpu: "1"
+    requests:
+      cpu: "25m"
+      memory: "512Mi"
+  priorityClassName: ""
+  podDisruptionBudget:
+    enabled: false
+    minAvailable: 2
+
+data:
+  name: data
+  exposeHttp: false
+  replicas: 2
+  heapSize: "1536m"
+  persistence:
+    enabled: true
+    accessMode: ReadWriteOnce
+    name: data
+    size: "30Gi"
+  terminationGracePeriodSeconds: 3600
+  antiAffinity: "soft"
+  nodeSelector: {}
+  tolerations: {}
+  resources:
+    limits:
+      cpu: "1"
+    requests:
+      cpu: "25m"
+      memory: "1536Mi"
+  priorityClassName: ""
+  podDisruptionBudget:
+    enabled: false
+    maxUnavailable: 1

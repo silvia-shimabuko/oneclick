@@ -1,0 +1,136 @@
+import org.apache.tools.ant.taskdefs.condition.Os 
+
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+
+sourceCompatibility = "1.8"
+targetCompatibility = "1.8"
+
+jar.enabled = false
+
+ext {
+	portalTestVersion = "3.1.0" 
+    portalTestIntegrationVersion = "3.2.0" 
+
+	powerMockVersion = "1.7.3"
+}
+
+task removeDefaultTestBundles(type: Delete) { 
+    delete fileTree("${gradle.liferayWorkspace.homeDir}/osgi/test") { 
+        include '*.jar' 
+    } 
+} 
+ 
+task runTestIntegration { 
+    if (gradle.startParameter.taskNames.contains('runTestIntegration')) { 
+        gradle.startParameter.excludedTaskNames += "npmInstall"
+        gradle.startParameter.excludedTaskNames += "transpileJS"
+        gradle.startParameter.excludedTaskNames += "startTestableTomcat" 
+    }
+    
+    dependsOn {
+        getTasksByName('testIntegration', true)
+    }    
+}
+
+configure(subprojects.findAll { !it.subprojects }) {
+	afterEvaluate { project ->
+
+        buildCSS { 
+            sassCompilerClassName = "ruby" 
+        } 
+ 
+        bundle { 
+            instruction "-fixupmessages", "annotations are deprecated" 
+        } 
+
+		compileJava {
+			dependsOn "formatSource"
+			options.encoding = "UTF-8"
+		}
+
+		dependencies {
+			testCompile group: "junit", name: "junit", version: "4.12"
+
+			testCompile group: 'org.hamcrest', name: 'java-hamcrest', version: '2.0.0.0'
+           	
+			testCompile group: "org.mockito", name: "mockito-all", version: "2.0.2-beta" 
+            testCompile group: "org.powermock", name: "powermock-api-mockito", version: powerMockVersion 
+
+			testCompile group: "org.powermock", name: "powermock-core", version: powerMockVersion
+			testCompile group: "org.powermock", name: "powermock-module-junit4", version: powerMockVersion
+		}
+
+		deploy {
+			exclude "**/*source.formatter*.jar"
+		}
+		
+		project.plugins.withId('com.liferay.test.integration') {
+            configurations {
+                testModules
+            }
+
+            dependencies {
+				testIntegrationCompile group: "com.liferay.portal", name: "com.liferay.portal.test", version: portalTestVersion 
+                testIntegrationCompile group: "com.liferay.portal", name: "com.liferay.portal.test.integration", version: portalTestIntegrationVersion 
+ 
+                testModules group: "com.liferay.portal", name: "com.liferay.portal.test", version: portalTestVersion 
+                testModules group: "com.liferay.portal", name: "com.liferay.portal.test.integration", version: portalTestIntegrationVersion 
+ 
+                testModules group: "com.liferay", name: "com.liferay.petra.concurrent", version: "1.1.2" 
+                testModules group: "com.liferay", name: "com.liferay.petra.memory", version: "1.0.1" 
+                testModules group: "com.liferay", name: "com.liferay.petra.lang", version: "1.1.0"
+
+                testModules group: "org.apache.aries.jmx", name: "org.apache.aries.jmx.core", version: "1.1.7"
+            }
+
+            copyTestModules.dependsOn removeDefaultTestBundles 
+ 
+            setUpTestableTomcat { 
+                doFirst { 
+                    copy { 
+                        from zipTree(configurations.jacocoAgent.singleFile) 
+                        include "**/*.jar" 
+                        includeEmptyDirs = false 
+                        into "${rootProject.buildDir}/tmp/" 
+                    } 
+                } 
+                jaCoCoAgentFile "${rootProject.buildDir}/tmp/jacocoagent.jar" 
+                jaCoCoAgentConfiguration "=destfile=${rootProject.buildDir}/jacoco/tomcat.exec" 
+            } 
+ 
+			startTestableTomcat.dependsOn rootProject.deployTestableModules
+            startTestableTomcat.checkTimeout 1200000 
+   
+            if (!Os.isFamily(Os.FAMILY_WINDOWS)) { 
+                startTestableTomcat.executableArgs = ['jacoco', 'run'] 
+            }
+
+            testIntegration {
+                testClassesDir = sourceSets.testIntegration.output.classesDir
+            }
+        }
+
+        test { 
+            if (System.getProperty("DEBUG", "false") == "true") { 
+                jvmArgs "-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=9009" 
+            } 
+ 
+            ignoreFailures false 
+ 
+            testLogging { 
+                events "failed" 
+                exceptionFormat "short" 
+ 
+                debug { 
+                    events "started", "skipped", "failed" 
+                    exceptionFormat "full" 
+                } 
+ 
+                info.events = ["failed", "skipped"] 
+            } 
+        } 
+
+	}
+}

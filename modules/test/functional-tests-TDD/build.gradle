@@ -1,0 +1,220 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
+jar.enabled = false
+
+group = 'com.liferay.sample'
+version = '1.0.0-SNAPSHOT'
+
+description = """Sample TDD Functional Test Module"""
+
+repositories {
+	jcenter()
+	mavenCentral()
+	mavenLocal()
+}
+
+dependencies {
+	compile group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
+	compile group: "javax.portlet", name: "portlet-api", version: "2.0"
+	compile group: "javax.servlet", name: "servlet-api", version: "2.5"
+	compile group: "org.codehaus.groovy", name: "groovy-all", version: "2.4.5"
+	compile group: "org.osgi", name: "org.osgi.compendium", version: "5.0.0"
+}
+
+tasks.withType(Test) {
+	testLogging {
+		events "passed", "skipped", "failed"
+		showExceptions true
+		exceptionFormat "short"
+		showCauses true
+		showStackTraces true
+
+		afterSuite { desc, result ->
+			if (!desc.parent) {
+				def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+				def startItem = '|  ', endItem = '  |'
+				def repeatLength = startItem.length() + output.length() + endItem.length()
+				println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+			}
+		}
+	}
+}
+
+tasks.withType(Test) {
+	reports.html.destination = file("${reporting.baseDir}/${name}")
+}
+
+sourceSets {
+	functionalTest {
+		java {
+			compileClasspath += main.output + test.output
+			runtimeClasspath += main.output + test.output
+			srcDir file('src/functionalTest/java')
+		}
+		resources.srcDir file('src/functionalTest/resources')
+	}
+}
+
+configurations {
+	functionalTestCompile.extendsFrom testCompile
+	functionalTestRuntime.extendsFrom testRuntime
+}
+
+task performTests(type: Test) {
+	description 'Run the TDD Functional Tests.'
+
+	testClassesDir = sourceSets.functionalTest.output.classesDir
+	classpath = sourceSets.functionalTest.runtimeClasspath
+
+	filter {
+		includeTestsMatching "*AllTests"
+	}
+
+	outputs.upToDateWhen { false }
+}
+
+task runFunctionalTest {
+	dependsOn performTests
+}
+
+task functionalTest {
+	dependsOn rootProject.deployTestableModules, startTestableTomcat, runFunctionalTest
+}
+
+startTestableTomcat.mustRunAfter rootProject.deployTestableModules
+performTests.mustRunAfter startTestableTomcat
+stopTestableTomcat.mustRunAfter functionalTest
+
+// Command to run this task: ./gradlew functionalTestClass -PclassToBeTested=<Class Name>
+// Example: ./gradlew functionalTestClass -PclassToBeTested=SampleTest
+task functionalTestClass(type: Test) {
+	description 'Run the Specific TDD Functional Tests.'
+
+	testClassesDir = sourceSets.functionalTest.output.classesDir
+	classpath = sourceSets.functionalTest.runtimeClasspath
+
+	scanForTestClasses = false
+
+	if (project.hasProperty('classToBeTested')==false){
+	} else {
+		includes = ['**/'+project.getProperty('classToBeTested')+'.class']
+	}
+
+	outputs.upToDateWhen { false }
+}
+
+task setupFunctionalTest {
+	description 'Create the TDD Functional Tests properties and Google Chrome Driver, but only work if run on project root folder.'
+
+	doLast {
+		def baseDir = "${project.hasProperty('liferay.workspace.home.dir') ? project.property('liferay.workspace.home.dir') : 'modules'}"
+		def SeleniumPropertyKeysPath = new File('modules/test/functional-tests-TDD/SeleniumProperties')
+		def SeleniumPropertyKeysFile = new File('modules/test/functional-tests-TDD/SeleniumProperties/SeleniumPropertyKeys.properties')
+		println "You should run this task only on your project root folder"
+		if (!SeleniumPropertyKeysFile.exists()) {
+			println "Create Configuration for use a local SeleniumPropertyKeys.properties"
+			SeleniumPropertyKeysPath.mkdirs()
+			SeleniumPropertyKeysFile.withWriterAppend { w ->
+				w << "browser=defaultGC\ntime-out=20"
+			}
+		} else {
+			println "You already had the local SeleniumPropertyKeys.properties created"
+		}
+
+		if ((Os.isFamily(Os.FAMILY_WINDOWS)) && (!new File(baseDir + '/test/functional-tests-TDD/SeleniumProperties/chromedriver.exe').exists())) {
+			println "Create Configuration for Windows to use the Google Chrome Driver"
+			download {
+				src 'https://chromedriver.storage.googleapis.com/2.41/chromedriver_win32.zip'
+				dest new File(SeleniumPropertyKeysPath, 'chromedriver_win32.zip')
+			}
+
+			copy {
+				def DriverPath = new File('/SeleniumProperties/')
+				from zipTree('/SeleniumProperties/chromedriver_win32.zip')
+				into "SeleniumProperties/"
+			}
+			delete 'SeleniumProperties/chromedriver_win32.zip'
+
+		} else if ((Os.isFamily(Os.FAMILY_MAC)) && (!new File(baseDir + '/test/functional-tests-TDD/SeleniumProperties/chromedriver').exists())) {
+			println "Create Configuration for Mac to use the Google Chrome Driver"
+			download {
+				src 'https://chromedriver.storage.googleapis.com/2.41/chromedriver_mac64.zip'
+				dest new File(SeleniumPropertyKeysPath, 'chromedriver_mac64.zip')
+			}
+
+			copy {
+				def DriverPath = new File('/SeleniumProperties/')
+				from zipTree('SeleniumProperties/chromedriver_mac64.zip')
+				into "SeleniumProperties/"
+			}
+			delete 'SeleniumProperties/chromedriver_mac64.zip'
+
+		} else if ((Os.isFamily(Os.FAMILY_UNIX)) && (!new File(baseDir + '/test/functional-tests-TDD/SeleniumProperties/chromedriver').exists())) {
+			println "Create Configuration for Unix to use the Google Chrome Driver"
+			download {
+				src 'https://chromedriver.storage.googleapis.com/2.41/chromedriver_linux64.zip'
+				dest new File(SeleniumPropertyKeysPath, 'chromedriver_linux64.zip')
+			}
+
+			copy {
+				from zipTree(new File('SeleniumProperties/', 'chromedriver_linux64.zip'))
+				into "SeleniumProperties/"
+			}
+			delete 'SeleniumProperties/chromedriver_linux64.zip'
+		} else {
+			println "You already had the local Google Chrome Driver created"
+		}
+	}
+}
+
+task setupFunctionalTestWithFirefox {
+	description 'Create the TDD Functional Tests properties and Firefox Driver, for Functional Test with TDD flow, but only work if run on project root folder.'
+
+	doLast {
+		def baseDir =  "${project.hasProperty('liferay.workspace.home.dir') ? project.property('liferay.workspace.home.dir') : 'modules'}"
+		def SeleniumPropertyKeysPath = new File( 'modules/test/functional-tests-TDD/SeleniumProperties' )
+		def SeleniumPropertyKeysFile = new File( 'modules/test/functional-tests-TDD/SeleniumProperties/SeleniumPropertyKeys.properties' )
+		println "You should run this task only on your project root folder"
+		if( !SeleniumPropertyKeysFile.exists() ) {
+			println "Create Configuration for use a local SeleniumPropertyKeys.properties"
+			SeleniumPropertyKeysPath.mkdirs()
+			SeleniumPropertyKeysFile.withWriterAppend { w ->
+				w <<  "browser=defaultFF\ntime-out=5\nenvironment=http://localhost:8080"
+			}
+		} else {
+			println "You already had the local SeleniumPropertyKeys.properties created"
+		}
+
+		if (Os.isFamily(Os.FAMILY_MAC)) {
+			println "Create Configuration for Mac to use the Firefox Driver"
+			delete 'SeleniumProperties/geckodriver'
+
+			download {
+				src 'https://github.com/mozilla/geckodriver/releases/download/v0.20.1/geckodriver-v0.20.1-macos.tar.gz'
+				dest new File(SeleniumPropertyKeysPath, 'geckodriver-v0.20.1-macos.tar.gz')
+			}
+
+			copy {
+				def DriverPath = new File ('/SeleniumProperties/')
+				from tarTree('SeleniumProperties/geckodriver-v0.20.1-macos.tar.gz')
+				into "SeleniumProperties/"
+			}
+			delete 'SeleniumProperties/geckodriver-v0.20.1-macos.tar.gz'
+
+		} else if (Os.isFamily(Os.FAMILY_UNIX)){
+			println "Create Configuration for Unix to use the Firefox Driver"
+			delete 'SeleniumProperties/geckodriver'
+
+			download {
+				src 'https://github.com/mozilla/geckodriver/releases/download/v0.20.1/geckodriver-v0.20.1-linux64.tar.gz'
+				dest new File(SeleniumPropertyKeysPath, 'geckodriver-v0.20.1-linux64.tar.gz')
+			}
+
+			copy {
+				from tarTree(new File('SeleniumProperties/', 'geckodriver-v0.20.1-linux64.tar.gz'))
+				into "SeleniumProperties/"
+			}
+			delete 'SeleniumProperties/geckodriver-v0.20.1-linux64.tar.gz'
+		  }
+	}
+}

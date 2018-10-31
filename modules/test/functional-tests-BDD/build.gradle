@@ -1,0 +1,176 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
+jar.enabled = false
+
+group = 'com.liferay.sample'
+version = '1.0.0-SNAPSHOT'
+
+description = """Sample BDD Functional Test Module"""
+
+repositories {
+	jcenter()
+	mavenCentral()
+	mavenLocal()
+}
+
+project.ext {
+	cucumberVersion = '1.2.5'
+}
+
+dependencies {
+	testCompile "info.cukes:cucumber-java:" + cucumberVersion
+	testCompile "info.cukes:cucumber-junit:" + cucumberVersion
+}
+
+tasks.withType(Test) {
+	testLogging {
+		events "passed", "skipped", "failed"
+		showExceptions true
+		exceptionFormat "short"
+		showCauses true
+		showStackTraces true
+
+		afterSuite { desc, result ->
+			if (!desc.parent) {
+				def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+				def startItem = '|  ', endItem = '  |'
+				def repeatLength = startItem.length() + output.length() + endItem.length()
+				println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+			}
+		}
+	}
+}
+
+sourceSets {
+	functionalTest {
+		java {
+			compileClasspath += main.output + test.output
+			runtimeClasspath += main.output + test.output
+			srcDir file('src/functionalTest/java')
+		}
+		resources.srcDir file('src/functionalTest/resources')
+	}
+}
+
+configurations {
+	functionalTestCompile.extendsFrom testCompile
+	functionalTestRuntime.extendsFrom testRuntime
+}
+
+task runCucumberTest(type: Test) {
+	description 'Runs the BDD Functional Tests with the BDD flow, performed by Cucumber framework.'
+
+	testClassesDir = sourceSets.functionalTest.output.classesDir
+	classpath = sourceSets.functionalTest.runtimeClasspath
+	outputs.upToDateWhen { false }
+}
+
+gradle.taskGraph.whenReady { graph ->
+	if (graph.hasTask(build)) {
+		runCucumberTest.enabled = false
+	}
+}
+
+task setupCucumberTestWithGoogleChrome {
+	description 'Create the BDD Functional Tests properties and Chrome Driver Headless, for Functional Test with BDD flow, but only work if run on project root folder.'
+
+	doLast {
+		def baseDir =  "${project.hasProperty('liferay.workspace.home.dir') ? project.property('liferay.workspace.home.dir') : 'modules'}"
+		def SeleniumPropertyKeysPath = new File( 'modules/test/functional-tests-BDD/SeleniumProperties' )
+		def SeleniumPropertyKeysFile = new File( 'modules/test/functional-tests-BDD/SeleniumProperties/SeleniumPropertyKeys.properties' )
+		println "You should run this task only on your project root folder"
+		if( !SeleniumPropertyKeysFile.exists() ) {
+			println "Create Configuration for use a local SeleniumPropertyKeys.properties"
+			SeleniumPropertyKeysPath.mkdirs()
+			SeleniumPropertyKeysFile.withWriterAppend { w ->
+				w <<  "browser=defaultGC\ntime-out=5\nenvironment=http://localhost:8080"
+			}
+		} else {
+			println "You already had the local SeleniumPropertyKeys.properties created"
+		}
+
+		if (Os.isFamily(Os.FAMILY_MAC)) {
+			println "Create Configuration for Mac to use the Google Chrome Driver"
+			delete 'SeleniumProperties/chromedriver'
+
+			download {
+				src 'https://chromedriver.storage.googleapis.com/2.41/chromedriver_mac64.zip'
+				dest new File(SeleniumPropertyKeysPath, 'chromedriver_mac64.zip')
+			}
+
+			copy {
+				def DriverPath = new File ('/SeleniumProperties/')
+				from zipTree('SeleniumProperties/chromedriver_mac64.zip')
+				into "SeleniumProperties/"
+			}
+			delete 'SeleniumProperties/chromedriver_mac64.zip'
+
+		} else if (Os.isFamily(Os.FAMILY_UNIX)) {
+			println "Create Configuration for Unix to use the Google Chrome Driver"
+			delete 'SeleniumProperties/chromedriver'
+
+			download {
+				src 'https://chromedriver.storage.googleapis.com/2.41/chromedriver_linux64.zip'
+				dest new File(SeleniumPropertyKeysPath, 'chromedriver_linux64.zip')
+			}
+
+			copy {
+				from zipTree(new File('SeleniumProperties/', 'chromedriver_linux64.zip'))
+				into "SeleniumProperties/"
+			}
+			delete 'SeleniumProperties/chromedriver_linux64.zip'
+		  }
+	}
+}
+
+task setupCucumberTestWithFirefox {
+	description 'Create the BDD Functional Tests properties and Firefox Driver, for Functional Test with BDD flow, but only work if run on project root folder.'
+
+	doLast {
+		def baseDir =  "${project.hasProperty('liferay.workspace.home.dir') ? project.property('liferay.workspace.home.dir') : 'modules'}"
+		def SeleniumPropertyKeysPath = new File( 'modules/test/functional-tests-BDD/SeleniumProperties' )
+		def SeleniumPropertyKeysFile = new File( 'modules/test/functional-tests-BDD/SeleniumProperties/SeleniumPropertyKeys.properties' )
+		println "You should run this task only on your project root folder"
+		if( !SeleniumPropertyKeysFile.exists() ) {
+			println "Create Configuration for use a local SeleniumPropertyKeys.properties"
+			SeleniumPropertyKeysPath.mkdirs()
+			SeleniumPropertyKeysFile.withWriterAppend { w ->
+				w <<  "browser=defaultFF\ntime-out=5\nenvironment=http://localhost:8080"
+			}
+		} else {
+			println "You already had the local SeleniumPropertyKeys.properties created"
+		}
+
+		if (Os.isFamily(Os.FAMILY_MAC)) {
+			println "Create Configuration for Mac to use the Firefox Driver"
+			delete 'SeleniumProperties/geckodriver'
+
+			download {
+				src 'https://github.com/mozilla/geckodriver/releases/download/v0.20.1/geckodriver-v0.20.1-macos.tar.gz'
+				dest new File(SeleniumPropertyKeysPath, 'geckodriver-v0.20.1-macos.tar.gz')
+			}
+
+			copy {
+				def DriverPath = new File ('/SeleniumProperties/')
+				from tarTree('SeleniumProperties/geckodriver-v0.20.1-macos.tar.gz')
+				into "SeleniumProperties/"
+			}
+			delete 'SeleniumProperties/geckodriver-v0.20.1-macos.tar.gz'
+
+		} else if (Os.isFamily(Os.FAMILY_UNIX)){
+			println "Create Configuration for Unix to use the Firefox Driver"
+			delete 'SeleniumProperties/geckodriver'
+
+			download {
+				src 'https://github.com/mozilla/geckodriver/releases/download/v0.20.1/geckodriver-v0.20.1-linux64.tar.gz'
+				dest new File(SeleniumPropertyKeysPath, 'geckodriver-v0.20.1-linux64.tar.gz')
+			}
+
+			copy {
+				from tarTree(new File('SeleniumProperties/', 'geckodriver-v0.20.1-linux64.tar.gz'))
+				into "SeleniumProperties/"
+			}
+			delete 'SeleniumProperties/geckodriver-v0.20.1-linux64.tar.gz'
+		  }
+	}
+}

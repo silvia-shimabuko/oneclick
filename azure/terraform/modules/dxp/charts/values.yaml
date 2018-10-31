@@ -1,0 +1,13 @@
+
+liferay:
+  image: terraformregistry.azurecr.io/liferay-dxp:7.0.10.7
+  replicas: 2
+  storage:
+    sharename: liferayshare
+  environment:
+
+
+proxy:
+  image: terraformregistry.azurecr.io/httpd-proxy:v1
+  storage:
+    sharename: proxyshare

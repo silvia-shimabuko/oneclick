@@ -1,0 +1,8 @@
+Bundle-Name: samplePortlet
+Bundle-SymbolicName: samplePortlet
+Bundle-Version: 1.0.0
+Export-Package: 	samplePortlet.constants,\
+	\
+	samplePortlet.portlet,\
+	\
+	samplePortlet.service

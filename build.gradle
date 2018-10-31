@@ -1,0 +1,107 @@
+import org.apache.tools.ant.taskdefs.condition.Os;
+
+plugins {
+    id "org.sonarqube" version "2.6"
+}
+
+allprojects {
+    apply plugin: "eclipse"
+    apply plugin: "idea"
+    apply plugin: "jacoco"
+    jacoco {
+        group = "Coverage"
+        description = "Generate Jacoco coverage reports after running tests."
+    }
+}
+
+distBundle {
+    exclude "**/source.formatter*.jar"
+}
+
+def sdlcPropsFile = new File(System.getProperty('user.home') + "/.liferay/sdlc.properties");
+def sdlcProps = new Properties()
+
+if (sdlcPropsFile.exists()) {
+    sdlcProps.load(new FileInputStream(sdlcPropsFile));
+}
+
+def sdlcUsername = sdlcProps.get('username') ?: sdlcProps.get('nexusUsername');
+def sdlcPassword = sdlcProps.get('password') ?: sdlcProps.get('nexusPassword');
+
+ext {
+    nexusUsername = System.getenv("NEXUS_USER") ?: sdlcUsername;
+    nexusPassword = System.getenv("NEXUS_PASSWORD") ?: sdlcPassword;
+    sonarUsername = System.getenv("SONAR_USER") ?: sdlcUsername;
+    sonarPassword = System.getenv("SONAR_PASSWORD") ?: sdlcPassword;
+}
+
+downloadBundle {
+    username nexusUsername
+    password nexusPassword
+    onlyIf {
+        String url = downloadBundle.src.toString()
+        File cachedFile = new File(downloadBundle.dest, url.substring(url.lastIndexOf("/") + 1))
+        if (cachedFile.exists()) {
+            return false
+        }
+
+        return true
+    }
+}
+
+task deployTestableModules {
+    dependsOn {
+        getTasksByName('deploy', true)
+    }
+}
+
+task fixTomcatBinPermission {
+    doLast {
+        def baseDir = "${project.hasProperty('liferay.workspace.home.dir') ? project.property('liferay.workspace.home.dir') : 'bundles'}"
+        if (Os.isFamily(Os.FAMILY_UNIX)) {
+            new File(baseDir + '/tomcat-8.0.32/bin').eachFileMatch(~/.*\.sh/) { file ->
+                exec {
+                    commandLine 'chmod', '+x', file.path
+                }
+            }
+        }
+    }
+}
+
+initBundle.finalizedBy fixTomcatBinPermission
+
+sonarqube {
+    properties {
+        property "sonar.projectKey", "oneclick"
+        property "sonar.analysis.mode", "preview"
+        property "sonar.issuesReport.console.enable", "true"
+        property "sonar.issuesReport.html.enable", "true"
+        property "sonar.host.url", "https://gs-sonar.liferay.com"
+        property "sonar.login", sonarUsername
+        property "sonar.password", sonarPassword
+    }
+}
+
+def jacocoReports = fileTree(rootDir).include("**/build/jacoco/*.exec").files
+subprojects {
+    sonarqube {
+        properties {
+            if(project.pluginManager.hasPlugin('java')) {
+                def tests = project.sourceSets.findAll { it.name.matches('test|testIntegration|functionalTest') }
+                def testTasks = project.tasks.withType(Test.class)
+                def testSources = tests.allJava.srcDirs.flatten().findAll { it.exists() }
+                def testClasses = tests.output.classesDir.flatten().findAll { it.exists() }
+                def junitReports = testTasks.reports.junitXml.destination.findAll { it.exists() }
+                def generatedFiles = fileTree(project.projectDir).include("**/*.java")
+                        .files.findAll { it.text.contains("* @generated") }.collect { project.relativePath(it) }
+
+                property 'sonar.tests', testSources
+                property 'sonar.java.test.binaries', testClasses
+                property 'sonar.junit.reportPaths', junitReports
+                property "sonar.jacoco.reportPaths", jacocoReports
+                property "sonar.coverage.exclusions", generatedFiles
+                property "sonar.exclusions", generatedFiles
+            }
+        }
+    }
+}

@@ -1,0 +1,28 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: es-volume
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+  - ReadWriteMany
+  azureFile:
+    secretName: azure-secret
+    shareName: esshare
+    readOnly: false
+  claimRef:
+    namespace: default
+    name: es-files
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: es-files
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi

@@ -1,0 +1,3 @@
+Bundle-Name: Liferay - Insistence Layer JDBC
+Bundle-SymbolicName: com.liferay.insistencelayer.jdbc
+Bundle-Version: 1.0.0

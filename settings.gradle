@@ -1,0 +1,79 @@
+gradle.allprojects {
+	plugins.withId("com.liferay.node") {
+		node.npmArgs = "--no-optional"
+	}
+
+	buildscript {
+		repositories {
+			mavenLocal()
+
+			maven {
+				url projectNexusUrl
+			}
+
+			maven {
+				url "https://repository-cdn.liferay.com/nexus/content/repositories/liferay-public-releases/"
+			}
+
+			maven {
+				url "https://repository-cdn.liferay.com/nexus/content/groups/public/"
+			}
+
+			mavenCentral()
+
+			jcenter()
+		}
+	}
+
+	repositories {
+		mavenLocal()
+
+		maven {
+			url projectNexusUrl
+		}
+
+		maven {
+			url "https://repository-cdn.liferay.com/nexus/content/repositories/liferay-public-releases/"
+		}
+
+		maven {
+			url "https://repository-cdn.liferay.com/nexus/content/groups/public/"
+		}
+
+		mavenCentral()
+
+		jcenter()
+	}
+
+}
+
+buildscript {
+	dependencies {
+		classpath group: "com.liferay", name: "com.liferay.gradle.plugins.workspace", version: "1.7.1"
+		classpath group: "net.saliman", name: "gradle-properties-plugin", version: "1.4.6"
+	}
+
+	repositories {
+		mavenLocal()
+
+		maven {
+			url projectNexusUrl
+		}
+
+		maven {
+			url "https://repository-cdn.liferay.com/nexus/content/repositories/liferay-public-releases/"
+		}
+
+		maven {
+			url "https://repository-cdn.liferay.com/nexus/content/groups/public/"
+		}
+
+		mavenCentral()
+
+		jcenter()
+	}
+}
+
+apply plugin: "net.saliman.properties"
+
+apply plugin: "com.liferay.workspace"

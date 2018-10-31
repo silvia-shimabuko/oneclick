@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: azure-secret
+type: Opaque
+data:
+  azurestorageaccountname: {{ .Values.liferay.storage.name }}
+  azurestorageaccountkey: {{ .Values.liferay.storage.secret }}

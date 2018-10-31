@@ -1,0 +1,10 @@
+samples
+.terraform
+terraform.tfstate.d
+portal-ext.user.properties
+userinput.tfvars
+backend-provider.tf
+config/out
+terraform.tfstate
+terraform.tfstate.backup
+pubring.gpg

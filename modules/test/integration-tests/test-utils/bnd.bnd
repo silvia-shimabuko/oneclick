@@ -1,0 +1,6 @@
+Bundle-Name: test-utils
+Bundle-SymbolicName: com.sample.tests.util.integration
+Bundle-Version: 1.0.0
+Export-Package: com.sample.tests.util.integration
+-privatepackage:\
+\javax.inject

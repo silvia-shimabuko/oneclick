@@ -1,0 +1,7 @@
+Bundle-Name: Sample Integration Integration Tests
+Bundle-SymbolicName: com.sample.integration.test
+Bundle-Version: 1.0.0
+Import-Package: *
+-privatepackage:\
+	\javax.inject,\
+	\com.sample.tests.util.integration.*

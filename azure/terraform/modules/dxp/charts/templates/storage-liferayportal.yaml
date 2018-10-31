@@ -1,0 +1,62 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: liferay-volume
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+  - ReadWriteMany
+  azureFile:
+    secretName: azure-secret
+    shareName: {{ .Values.liferay.storage.sharename }}
+    readOnly: false
+  claimRef:
+    namespace: default
+    name: liferay-files
+  mountOptions:
+  - uid=999
+  - gid=999
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: liferay-files
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: proxy-volume
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+  - ReadWriteOnce
+  azureFile:
+    secretName: azure-secret
+    shareName: {{ .Values.proxy.storage.sharename }}
+    readOnly: false
+  claimRef:
+    namespace: default
+    name: proxy-files
+  mountOptions:
+  - uid=999
+  - gid=999
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: proxy-files
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

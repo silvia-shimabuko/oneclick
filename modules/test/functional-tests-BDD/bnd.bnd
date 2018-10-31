@@ -1,0 +1,3 @@
+Bundle-Name: Samples BDD Functional Tests
+Bundle-SymbolicName: com.sample.bdd.functional
+Bundle-Version: 1.0.0

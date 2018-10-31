@@ -1,0 +1,28 @@
+cluster.name: ${CLUSTER_NAME}
+
+node.master: ${NODE_MASTER}
+node.data: ${NODE_DATA}
+
+script.inline: true
+plugin.mandatory: cloud-aws
+network.publish_host: _ec2:privateIp_
+
+network.host: 0.0.0.0
+
+bootstrap.mlockall: true
+
+http.enabled: ${HTTP_ENABLE}
+http.compression: true
+http.cors.enabled: ${HTTP_CORS_ENABLE}
+http.cors.allow-origin: ${HTTP_CORS_ALLOW_ORIGIN}
+
+discovery.type: ec2
+discovery.ec2.minimum_master_nodes: ${NUMBER_OF_MASTERS}
+discovery.zen.ping.multicast.enabled: false
+
+cloud.node.auto_attributes: true
+
+index.number_of_shards: ${NUMBER_OF_SHARDS}
+index.number_of_replicas: ${NUMBER_OF_REPLICAS}
+
+

@@ -1,0 +1,17 @@
+<Context path="" crossContext="true">
+	<Resource
+			name="jdbc/LiferayPool"
+			auth="Container"
+			factory="org.apache.tomcat.jdbc.pool.DataSourceFactory"
+			type="javax.sql.DataSource"
+			driverClassName="org.postgresql.Driver"
+			url="${DB_URL}"
+			username="${DB_USER}"
+			password="${DB_PASSWORD}"
+			maxPoolSize="100"
+			minPoolSize="10"
+			acquireIncrement="5"
+			testWhileIdle="true"
+			validationQuery="SELECT 1"
+	/>
+</Context>

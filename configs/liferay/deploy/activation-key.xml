@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<license>
+	<account-name>Liferay DXP Demo</account-name>
+	<owner>Prathima Shreenath</owner>
+	<description>Liferay DXP Demo Developer Activation Keys</description>
+	<product-name>Digital Enterprise Development</product-name>
+	<product-version>7.1</product-version>
+	<license-name>Digital Enterprise Development</license-name>
+	<license-type>developer</license-type>
+	<license-version>6</license-version>
+	<start-date>Monday, August 20, 2018 2:00:50 PM GMT</start-date>
+	<expiration-date>Wednesday, July 27, 2118 2:00:50 PM GMT</expiration-date>
+	<max-http-sessions>5</max-http-sessions>
+	<key>7a68f863a2b73cc26924aabc0e0f1100dcd64e22d3a7f21891ec61006d4e63d01fe9916f95f60443ce1bc399124cee6c8ba55c3fb7a08cc06db40803ff8b7d31c1c3925f87ce48b9063a04fb3db6a909ff8f6436ec12e4ecad479827d7bbc8384c41cc0353b642cdf962a0a791850356788e06cc95985836addd9274578e4e02f0e98f8d</key>
+</license>

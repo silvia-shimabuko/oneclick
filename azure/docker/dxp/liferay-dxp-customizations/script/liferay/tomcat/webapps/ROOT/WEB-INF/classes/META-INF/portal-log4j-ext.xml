@@ -1,0 +1,148 @@
+<?xml version="1.0"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+    <appender class="org.apache.log4j.ConsoleAppender" name="CONSOLE">
+        <layout class="org.apache.log4j.EnhancedPatternLayout">
+            <!-- CUSTOM BEGIN -->
+            <!--
+                Make sure the timestamp (%d) includes the date, not only the time.
+                The original is '%d{ABSOLUTE}' ~ "HH:mm:ss,SSS", which results
+                into stamps like "15:49:37,459".
+
+                Without having the date, the log files could not be ingested
+                by CloudWatch logs agent (see the setup in e.g.
+                    liferay-in-cloud/prod/lfrgs-lakers-intranet-prod-appServers.cloudformation-template.json
+                -> user data)
+            -->
+            <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p [%t][%c{1}:%L] %m%n" />
+            <!-- CUSTOM END -->
+        </layout>
+    </appender>
+
+    <appender class="org.apache.log4j.rolling.RollingFileAppender" name="TEXT_FILE">
+        <!-- CUSTOM BEGIN -->
+        <!-- Inspired by: http://www.baeldung.com/java-logging-rolling-file-appenders -->
+
+        <!--
+            === What happens when current log file needs to be rotated? ===
+        -->
+
+        <!-- (A)
+            * archived files named with index (*.0.log.gz - *.12.log.gz),
+            * archived files gzipped,
+            * oldest archived files removed (overwritten by newer ones) -->
+
+        <!--<rollingPolicy class="org.apache.log4j.rolling.FixedWindowRollingPolicy">-->
+            <!--<param name="ActiveFileName" value="@liferay.home@/logs/liferay@spi.id@.current.log" />-->
+            <!--<param name="FileNamePattern" value="@liferay.home@/logs/liferay@spi.id@.%i.log.gz" />-->
+            <!--<param name="MinIndex" value="0" />-->
+            <!--<param name="MaxIndex" value="12" />    &lt;!&ndash; 13 is the maximum size of the window &ndash;&gt;-->
+        <!--</rollingPolicy>-->
+
+        <!-- (B)
+            * archived files named with daily timestamp + int (millis - in case there
+                are more files to be archived on the same day)
+            * archived files gzipped,
+            * no old archived files removed (kept gzipped indefinitely) -->
+
+        <rollingPolicy class="org.apache.log4j.rolling.TimeBasedRollingPolicy">
+            <param name="ActiveFileName" value="@liferay.home@/logs/liferay@spi.id@.current.log" />
+
+            <!-- gzip log files when rotation happens - when new log file is started -->
+            <param name="FileNamePattern" value="@liferay.home@/logs/liferay@spi.id@.%d{yyyy-MM-dd}.%i.log.gz" />
+        </rollingPolicy>
+
+        <!-- (C) - original in Liferay
+            * archived files named with daily timestamp,
+            * archived files NOT gzipped,
+            * no old archived files removed (kept non-gzipped indefinitely) -->
+
+        <!--<rollingPolicy class="org.apache.log4j.rolling.TimeBasedRollingPolicy">-->
+            <!--<param name="FileNamePattern" value="@liferay.home@/logs/liferay@spi.id@.%d{yyyy-MM-dd}.log" />-->
+        <!--</rollingPolicy>-->
+
+
+        <!--
+            === When is current log file rotated? ===
+        -->
+
+        <!-- (a)
+            * when its size limit is reached -->
+
+        <triggeringPolicy class="org.apache.log4j.rolling.SizeBasedTriggeringPolicy">
+            <!-- make sure the active log file won't grow out of bounds -->
+            <!-- must be in bytes:
+                    104857600 ~ 100 MB (100 * 1024 * 1024 B) -->
+            <param name="MaxFileSize" value="104857600" />
+        </triggeringPolicy>
+
+        <!-- (b) - original in Liferay
+            * daily on midnight (based on TimeBasedRollingPolicy);
+            * this is used when no explicit 'triggeringPolicy' is defined,
+            * comment out (a) above if you want to use this strategy -->
+
+
+        <!--
+            === What is the format of every logged event? ===
+        -->
+
+        <!-- Same timestamp pattern change as for CONSOLE's appender above -->
+        <layout class="org.apache.log4j.EnhancedPatternLayout">
+            <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p [%t][%c{1}:%L] %m%n" />
+        </layout>
+
+        <!-- CUSTOM END -->
+    </appender>
+
+    <!-- CUSTOM BEGIN -->
+    <!-- there is no reason to log into XML, so disable the appender altogether -->
+    <!--<appender class="org.apache.log4j.rolling.RollingFileAppender" name="XML_FILE">-->
+        <!--<rollingPolicy class="org.apache.log4j.rolling.TimeBasedRollingPolicy">-->
+            <!--<param name="FileNamePattern" value="@liferay.home@/logs/liferay@spi.id@.%d{yyyy-MM-dd}.xml" />-->
+        <!--</rollingPolicy>-->
+
+        <!--<layout class="org.apache.log4j.xml.XMLLayout">-->
+            <!--<param name="LocationInfo" value="true" />-->
+        <!--</layout>-->
+    <!--</appender>-->
+
+    <!-- log into JSON file as well; parsed by logstash and pushed to ELK stack,
+            see aws-ami/cemex/elk-logging.json -->
+    <appender class="org.apache.log4j.rolling.RollingFileAppender" name="JSON_FILE">
+        <!-- same as TEXT_FILE log above, only different layout: rotate based on size, gzip, keep latest 13 -->
+
+        <rollingPolicy class="org.apache.log4j.rolling.FixedWindowRollingPolicy">
+            <param name="ActiveFileName" value="@liferay.home@/logs/liferay@spi.id@.current.json" />
+            <param name="FileNamePattern" value="@liferay.home@/logs/liferay@spi.id@.%i.json.gz" />
+            <param name="MinIndex" value="0" />
+            <param name="MaxIndex" value="2" />    <!-- processed by ELK on the fly, so keep only few recent -->
+        </rollingPolicy>
+
+        <triggeringPolicy class="org.apache.log4j.rolling.SizeBasedTriggeringPolicy">
+            <!-- make sure the active log file won't grow out of bounds -->
+            <!-- must be in bytes:
+                    104857600 ~ 100 MB (100 * 1024 * 1024 B) -->
+            <param name="MaxFileSize" value="104857600" />
+        </triggeringPolicy>
+
+        <!-- NOTE: This requires 'json-smart-1.0.6.3.jar' and 'jsonevent-layout-1.7.jar'
+                on Liferay's classpath - in ROOT/WEB-INF/lib -->
+        <layout class="net.logstash.log4j.JSONEventLayoutV1" />
+    </appender>
+    <!-- CUSTOM END -->
+
+
+    <root>
+        <priority value="INFO" />
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="TEXT_FILE" />
+        <!-- CUSTOM BEGIN -->
+        <!-- no xml appender -->
+        <!--<appender-ref ref="XML_FILE" />-->
+        
+        <!-- JSON for ELK -->
+        <appender-ref ref="JSON_FILE" />
+        <!-- CUSTOM END -->
+    </root>
+</log4j:configuration>

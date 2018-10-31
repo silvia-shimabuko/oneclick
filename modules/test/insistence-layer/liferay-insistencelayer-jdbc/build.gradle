@@ -1,0 +1,38 @@
+dependencies {
+    compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
+    compileOnly group: 'commons-io', name: 'commons-io', version: '2.5'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+task copyInsistenceDriverJarToTomcat {
+    doLast {
+        copy {
+            from jar
+            into "${gradle.liferayWorkspace.homeDir}/tomcat-8.0.32/lib/ext"
+        }
+        copy {
+            from jar
+            into "${gradle.liferayWorkspace.homeDir}/../configs/ci/tomcat-8.0.32/lib/ext"
+        }
+        copy {
+            from jar
+            into "${gradle.liferayWorkspace.homeDir}/../configs/local/tomcat-8.0.32/lib/ext"
+        }
+        copy {
+            from "${gradle.liferayWorkspace.homeDir}/../configs/ci/tomcat-8.0.32/lib/ext/commons-io-2.5.jar"
+            into "${gradle.liferayWorkspace.homeDir}/tomcat-8.0.32/lib/ext"
+        }
+    }
+}
+
+task killInsistenceLayer {
+    doLast {
+        try {
+            def s = new Socket("localhost", 7700)
+            s << "KILL"
+            s.close()
+        } catch (e) {
+            println 'Could not kill insistence layer: ' + e.message
+        }
+    }
+}

@@ -1,0 +1,55 @@
+jar.enabled = false
+
+group = 'com.liferay.unit'
+version = '1.0.0-SNAPSHOT'
+
+description = """Samples Unit Test Module"""
+
+sourceSets {
+	unitTest {
+		java {
+			compileClasspath += main.output + test.output
+			runtimeClasspath += main.output + test.output
+			srcDir file('src/unitTest/java')
+		}
+		resources.srcDir file('src/unitTest/resources')
+	}
+}
+
+configurations {
+	unitTestCompile.extendsFrom testCompile
+	unitTestRuntime.extendsFrom testRuntime
+}
+
+task unitTest(type: Test) {
+	description 'Runs the Unit Tests.'
+
+	testClassesDir = sourceSets.unitTest.output.classesDir
+	classpath = sourceSets.unitTest.runtimeClasspath
+	outputs.upToDateWhen { false }
+}
+
+tasks.withType(Test) {
+	testLogging {
+		events "passed", "skipped", "failed"
+		showExceptions true
+		exceptionFormat "short"
+		showCauses true
+		showStackTraces true
+
+		afterSuite { desc, result ->
+			if (!desc.parent) {
+				def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+				def startItem = '|  ', endItem = '  |'
+				def repeatLength = startItem.length() + output.length() + endItem.length()
+				println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+			}
+		}
+	}
+}
+
+gradle.taskGraph.whenReady { graph ->
+	if (graph.hasTask(build)) {
+		unitTest.enabled = false
+	}
+}
