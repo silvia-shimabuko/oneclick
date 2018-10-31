@@ -41,7 +41,7 @@ RUN \
   mkdir -p /docker-init.d && \
   mkdir -p $LIFERAY_HOME && \
   unzip /tmp/$DXP_FILENAME -d /tmp/liferay && \
-  mv /tmp/liferay/liferay-*/* $LIFERAY_HOME/ && \
+  mv /tmp/liferay/* $LIFERAY_HOME/ && \
   mv $LIFERAY_HOME/tomcat-* $CATALINA_HOME && \
   cp -r $LIFERAY_HOME/data /docker-init.d/data && \
   chmod +x $CATALINA_HOME/bin/*.sh && \
