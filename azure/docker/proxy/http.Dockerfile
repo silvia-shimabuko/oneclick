@@ -9,8 +9,8 @@ RUN apt-get update \
     && a2enmod proxy \
     && a2enmod proxy_http \
     && a2enmod headers
-    
-ADD apache-proxy.conf /etc/apache2/sites-enabled/000-default.conf
+
+ADD 000-default.conf /etc/apache2/sites-enabled/000-default.conf
 ADD options-http-nossl.conf /etc/apache2/conf-available/http-options.conf
 
 EXPOSE 80

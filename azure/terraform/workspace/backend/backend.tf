@@ -1,4 +1,4 @@
-resource "azurerm_resource_group" "rg" {
+resource "azurerm_resource_group" "rg"{
   name     = "${local.resource_group}"
   location = "${local.location}"
 }

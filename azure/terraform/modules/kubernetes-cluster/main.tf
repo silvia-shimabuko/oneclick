@@ -17,7 +17,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
       enabled = "${var.http_application_routing}"
     }
   }
-
+  
   agent_pool_profile {
     name            = "${var.agent_pool_profile_name}"
     count           = "${var.agent_count}"

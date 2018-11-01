@@ -1,0 +1,31 @@
+resource_group               = ""
+location                     = ""
+service_prefix               = ""
+
+azure_subscription_id        = ""
+azure_tenant_id              = ""
+azure_client_id              = ""
+azure_client_secret          = ""
+
+aks_admin_username           = ""
+aks_name                     = ""
+aks_dns_prefix               = ""
+
+db_admin_username            = ""
+db_password                  = ""
+db_name                      = ""
+db_server_name               = ""
+db_azure_postgres_sku_family = "Gen5"
+db_sku_compute_units         = 2
+db_disk_size_mb              = 128000
+
+vm_size                      = ""
+node_count                   = 1
+
+registry_name                = ""
+dxp_image_name               = ""
+proxy_image_name             = ""
+azure_file_account_name      = ""
+dxp_replica_count            = 1
+
+backend_storage_account_name = ""

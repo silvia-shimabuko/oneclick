@@ -1,1 +1,2 @@
-variable "registry_name" {}
+variable "registry_name" {
+}

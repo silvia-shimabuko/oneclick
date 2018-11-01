@@ -1,4 +1,4 @@
-ARG DXP_IMAGE='GET FROM ARGUMENT'
+ARG DXP_IMAGE=liferay/liferay-dxp:7.1.10
 FROM $DXP_IMAGE
 
 COPY configs /docker-init.d/config

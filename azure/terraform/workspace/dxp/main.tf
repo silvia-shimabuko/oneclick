@@ -6,3 +6,4 @@ module "dxp" {
   replicas                = "${var.dxp_replica_count}"
   proxy_storage_sharename = "${local.proxy_storage_sharename}"
 }
+

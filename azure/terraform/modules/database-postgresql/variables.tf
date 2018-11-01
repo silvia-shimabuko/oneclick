@@ -1,4 +1,5 @@
-variable "location" {}
+variable "location" {
+}
 
 variable "service_name" {
   description = "Service this resource belongs to"
@@ -56,14 +57,18 @@ variable "geo_redundant_backup" {
   description = "Use GRS based backup? (NB - the platform will decide where the backups are held, it is not configurable)"
 }
 
-variable "database_charset" {}
-
-variable "database_collation" {}
-
-variable "db_firewall_name" {
-  description = "Name of the postgres firewall rule"
+variable "database_charset" {
 }
 
-variable "start_ip_address" {}
+variable "database_collation" {
+}
 
-variable "end_ip_address" {}
+variable "db_firewall_name" {
+  description = "Name of the postgres firewall rule" 
+}
+
+variable "start_ip_address" {
+}
+
+variable "end_ip_address" {
+}

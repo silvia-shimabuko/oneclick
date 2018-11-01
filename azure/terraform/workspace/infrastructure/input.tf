@@ -14,36 +14,53 @@ variable "azure_tenant_id" {
   description = "tenantId field obtained through azure cli: az login"
 }
 
-variable "aks_admin_username" {}
+variable "aks_admin_username" {
+}
 
-variable "db_admin_username" {}
+variable "db_admin_username" {
+}
 
-variable "db_password" {}
+variable "db_password" {
+}
 
-variable "db_name" {}
+variable "db_name" {
+}
 
-variable "azure_file_account_name" {}
+variable "azure_file_account_name" {
+}
 
-variable "registry_name" {}
+variable "registry_name" {
+}
 
-variable "db_server_name" {}
+variable "db_server_name" {
+}
 
-variable "resource_group" {}
+variable "resource_group" {
+}
 
-variable "location" {}
+variable "location" {
+}
 
-variable "vm_size" {}
+variable "vm_size" {
+}
 
-variable "node_count" {}
+variable "node_count" {
+}
 
-variable "service_prefix" {}
+variable "service_prefix" {
+}
 
-variable "aks_name" {}
+variable "aks_name" {
+}
 
-variable "aks_dns_prefix" {}
+variable "aks_dns_prefix" {
+}
 
-variable "db_sku_compute_units" {}
+variable "db_sku_compute_units" {
+}
 
-variable "db_disk_size_mb" {}
+variable "db_disk_size_mb" {
+}
 
-variable "db_azure_postgres_sku_family" {}
+variable "db_azure_postgres_sku_family" {
+}

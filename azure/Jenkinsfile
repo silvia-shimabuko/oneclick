@@ -1,0 +1,186 @@
+#!groovy
+import groovy.transform.Field;
+
+@Field final AZURE_CREDENTIALS_ID = ['azure_subscription_id':'ARM_SUBSCRIPTION_ID',
+                                     'azure_tenant_id':'ARM_TENANT_ID',
+                                     'azure_client_id':'ARM_CLIENT_ID',
+                                     'azure_client_secret':'ARM_CLIENT_SECRET'];
+
+@Field final FOLDER_CONFIG = "config"
+@Field final FOLDER_SCRIPTS = "scripts"
+@Field final FOLDER_SSH = "ssh"
+@Field final CREDENTIAL_JENKINS_SSH = "jenkins-id-rsa-pub"
+@Field boolean REMAIN_INFRASTRUCTURE = true
+@Field String AZURE_LOGIN_SP = "az login --service-principal -u [azure_client_id] -p [azure_client_secret] --tenant [azure_tenant_id]"
+
+
+properties([disableConcurrentBuilds(),
+    [$class: 'ParametersDefinitionProperty',
+        parameterDefinitions: [
+            stringParameter("JiraKey", "Jira key for the project")
+        ]
+    ]
+])
+
+def stringParameter(name, description, defaultValue="") {
+    return [ name: name, description: description, $class: 'StringParameterDefinition', default: defaultValue]
+}
+
+def getResourceGroupName(){
+    return extractJiraKey()+"rg"
+}
+
+def extractJiraKey(){
+    int maxSize = 8
+    String jiraKey = (params.JiraKey).replaceAll("[^A-Za-z]","").toLowerCase()
+    return jiraKey.substring(0, ((jiraKey.length() < maxSize) ? jiraKey.length(): maxSize))
+}
+
+def verifyResourceGroupExists(){
+    String resourceGroupName = getResourceGroupName()
+    sh "cd ${FOLDER_SCRIPTS} && ./setup-env.sh && az group exists -n ${resourceGroupName} >> rgResult.txt && ./validate-resource-group.sh"
+    REMAIN_INFRASTRUCTURE = false
+}
+
+def getIdRSAPub(){
+    String folderDir = "${FOLDER_CONFIG}/${FOLDER_SSH}"
+    String fileName = "id_rsa.pub"
+    String fileWrite = folderDir+"/"+fileName
+    withCredentials([sshUserPrivateKey(credentialsId: CREDENTIAL_JENKINS_SSH, keyFileVariable: 'keyfile')]) {
+        sh "cd ${folderDir} && cp ${keyfile} ${fileName}"
+    }
+}
+
+def createAzureUserInputFile() {
+    String fileName = "userinput.tfvars"
+    String fileWrite = FOLDER_CONFIG+"/"+fileName
+    String jiraKey = extractJiraKey()
+    String resourceGroupName = getResourceGroupName()
+
+    def properties = """
+        resource_group                 = \"${resourceGroupName}\"
+        location                       = \"eastus\"
+        service_prefix                 = \"${jiraKey}\"
+
+        aks_admin_username             = \"${jiraKey}admin\"
+        aks_name                       = \"${jiraKey}ks\"
+        aks_dns_prefix                 = \"${jiraKey}dns\"
+
+        db_admin_username              = \"dbadmin\"
+        db_password                    = \"${jiraKey}Admin123!\"
+        db_name                        = \"${jiraKey}db\"
+        db_server_name                 = \"${jiraKey}pg1\"
+        db_azure_postgres_sku_family   = \"Gen5\"
+        db_sku_compute_units           = 2
+        db_disk_size_mb                = 128000
+
+        vm_size                        = \"Standard_E4s_v3\"
+        node_count                     = 1
+
+        registry_name                  = \"${jiraKey}registry\"
+        dxp_image_name                 = \"${jiraKey}-dxp\"
+        proxy_image_name               = \"httpd-proxy\"
+        azure_file_account_name        = \"${jiraKey}azurefiles\"
+        dxp_replica_count              = 1
+
+        backend_storage_account_name   = \"${jiraKey}backend\"
+
+    """
+    writeFile file: FOLDER_CONFIG+"/"+fileName, text: properties
+
+    AZURE_CREDENTIALS_ID.each {id, var -> setupPropertiesCredentials(id, fileWrite)}
+
+    sh "cd ${FOLDER_CONFIG} && cat ${fileName} | sed -e 's/^[ \t]*//' -i ${fileName}"
+}
+
+def setupPropertiesCredentials(idCred, fileWrite){
+    setupCredentials(idCred, null, fileWrite)
+}
+
+def setupCredentials(idCred, envVar, fileWrite){
+    withCredentials([string(credentialsId: idCred, variable: 'value')]) {
+        if(envVar != null){
+            sh "echo export ${envVar}=\\\"${value}\\\" >> ${fileWrite}"
+            AZURE_LOGIN_SP = AZURE_LOGIN_SP.replace("["+idCred+"]",value)
+        }else{
+            sh "echo ${idCred}   = \\\"${value}\\\" >> ${fileWrite}"
+        }
+    }
+}
+
+def setupPortalExtUser(){
+    String fileName = "portal-ext.user.properties"
+    String fileNameSample = fileName + ".sample"
+
+    sh "cp $fileNameSample $fileNameSample"
+ }
+
+
+def exportCredentialsFile(){
+    String fileName = "setup-env.sh"
+    String fileWrite = FOLDER_SCRIPTS+"/"+fileName
+
+    sh "cd ${FOLDER_SCRIPTS} && echo '#!/bin/bash' >> ${fileName}"
+    AZURE_CREDENTIALS_ID.each {id, var -> setupCredentials(id, var, fileWrite)}
+    sh "cd ${FOLDER_SCRIPTS} && echo ${AZURE_LOGIN_SP} >> ${fileName}"
+    sh "chmod 755 ${fileWrite}"
+}
+
+def isEmpty(s) {
+    return s == null || "".equals(s)
+}
+
+def deleteResourceGroup(){
+    String resourceGroupName = getResourceGroupName()
+    sh "echo ERROR: This job could not complete to create infrastructure, starting process rollback."
+    sh "cd ${FOLDER_SCRIPTS} && ./setup-env.sh && az group delete -n ${resourceGroupName} --yes -y"
+    sh "echo Rollback concluded"
+}
+
+pipeline {
+    agent { label "azure-infrastructure" }
+    stages {
+        stage('Validate Parameters') {
+            steps {
+                script {
+                    if (isEmpty(JiraKey))
+                        error("You must provide the jira key for the project")
+                }
+            }
+        }
+
+        stage('Setup Configuration') {
+            steps {
+                script {
+                    deleteDir()
+                    checkout scm
+                    getIdRSAPub()
+                    exportCredentialsFile()
+                    setupPortalExtUser()
+                    createAzureUserInputFile()
+                    verifyResourceGroupExists()
+                }
+            }
+        }
+
+        stage('Executing scripts') {
+            steps {
+                sh "cd ${FOLDER_SCRIPTS} && . \$PWD/setup-env.sh && ./setup-infrastructure.sh"
+            }
+        }
+    }
+
+    post {
+        always {
+            sh "tar pczf ${FOLDER_CONFIG}.tar.gz ${FOLDER_CONFIG}"
+            archiveArtifacts artifacts: "**/${FOLDER_CONFIG}.tar.gz"
+        }
+        failure {
+            script {
+                if(!REMAIN_INFRASTRUCTURE){
+                    deleteResourceGroup()
+                }
+            }
+        }
+    }
+}

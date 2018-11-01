@@ -1,0 +1,2 @@
+readonly VERSION=7.1.10
+readonly DXP_FILENAME="liferay-dxp-tomcat-7.1.10-ga1-20180703090613030.zip"

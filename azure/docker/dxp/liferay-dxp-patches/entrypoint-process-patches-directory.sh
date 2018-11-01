@@ -16,6 +16,10 @@ drop your patches (*.zip) in the 'patches' directory.
 
   echo "'patches' directory found. The following content are going to be copied to $LIFERAY_HOME/patching-tool/patches/
 "
+  if [ ! -d $LIFERAY_HOME/patching-tool ]; then
+      echo "No '$LIFERAY_HOME/patching-tool' directory found."
+      return 0
+  fi
 
   tree --noreport $ENTRYPOINT_DIR/patches/
   if [[ -e $ENTRYPOINT_DIR/patching-tool/patching-tool.zip ]]; then

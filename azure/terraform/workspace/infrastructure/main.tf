@@ -18,19 +18,19 @@ module "virtual_network" {
 }
 
 module "kubernetes_cluster" {
-  source              = "../../modules/kubernetes-cluster"
-  resource_group_name = "${local.resource_group_name}"
-  location            = "${local.location}"
-  subnet_id           = "${module.virtual_network.vnet_subnet_id}"
-  vm_size             = "${local.vm_size}"
-  os_disk_size        = "${local.aks_os_disk_size}"
-  agent_count         = "${local.agent_count}"
-  aks_admin_username  = "${var.aks_admin_username}"
-  ssh_public_key      = "${local.ssh_public_key}"
-  client_id           = "${var.azure_client_id}"
-  client_secret       = "${var.azure_client_secret}"
-  name                = "${local.aks_name}"
-  dns_prefix          = "${local.aks_dns_prefix}"
+  source                  = "../../modules/kubernetes-cluster"
+  resource_group_name     = "${local.resource_group_name}"
+  location                = "${local.location}"
+  subnet_id               = "${module.virtual_network.vnet_subnet_id}"
+  vm_size                 = "${local.vm_size}"
+  os_disk_size            = "${local.aks_os_disk_size}"
+  agent_count             = "${local.agent_count}"
+  aks_admin_username      = "${var.aks_admin_username}"
+  ssh_public_key          = "${local.ssh_public_key}"
+  client_id               = "${var.azure_client_id}"
+  client_secret           = "${var.azure_client_secret}"
+  name                    = "${local.aks_name}"
+  dns_prefix              = "${local.aks_dns_prefix}"
 }
 
 module "registry" {
@@ -50,7 +50,7 @@ module "azure-file" {
 }
 
 module "dxp-userconfig" {
-  source = "../../modules/dxp-userconfig"
+  source              = "../../modules/dxp-userconfig"
 }
 
 module "database_postgresql" {

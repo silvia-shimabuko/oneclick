@@ -1,7 +1,7 @@
 resource "helm_release" "liferay-dxp" {
   name         = "liferay-dxp"
   chart        = "${replace(path.module,"/.*.terraform/",".terraform")}/charts/"
-  timeout      = 1800                                                            # seconds -> 30 minutes
+  timeout      = 1800 # seconds -> 30 minutes
   force_update = true
   keyring      = "../../../config/pubring.gpg"
 
@@ -16,7 +16,7 @@ resource "helm_release" "liferay-dxp" {
   }
 
   set {
-    name  = "liferay.replicas"
+    name = "liferay.replicas"
     value = "${var.replicas}"
   }
 

@@ -1,5 +1,8 @@
-variable "resource_group" {}
+variable "resource_group" {
+}
 
-variable "backend_storage_account_name" {}
+variable "backend_storage_account_name" {
+}
 
-variable "location" {}
+variable "location" {
+}

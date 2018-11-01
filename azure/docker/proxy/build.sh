@@ -7,7 +7,7 @@ VERSION=$1
 source commons.sh
 
 DOCKER_FILE=http.Dockerfile
-if [[ ../../config/certs/cert.pem ]]; then
+if [ -f ../../config/certs/cert.pem ]; then
     echo "Ssl certificate found. Building https proxy"
     DOCKER_FILE=https.Dockerfile
 else

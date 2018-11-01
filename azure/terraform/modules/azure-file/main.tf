@@ -20,9 +20,9 @@ resource "azurerm_storage_share" "proxy-share" {
 }
 
 resource "helm_release" "storage" {
-  name         = "azure-file"
+  name = "azure-file"
   chart        = "${path.module}/charts/"
-  timeout      = 900                      # seconds -> 15 minutes
+  timeout      = 900 # seconds -> 15 minutes
   force_update = true
 
   set {

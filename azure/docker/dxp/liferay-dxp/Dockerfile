@@ -41,16 +41,17 @@ RUN \
   mkdir -p /docker-init.d && \
   mkdir -p $LIFERAY_HOME && \
   unzip /tmp/$DXP_FILENAME -d /tmp/liferay && \
-  mv /tmp/liferay/* $LIFERAY_HOME/ && \
+  if [ -d /tmp/liferay/osgi ]; then  mv /tmp/liferay/* $LIFERAY_HOME/ ; else mv /tmp/liferay/*/* $LIFERAY_HOME/ ; fi && \
   mv $LIFERAY_HOME/tomcat-* $CATALINA_HOME && \
   cp -r $LIFERAY_HOME/data /docker-init.d/data && \
   chmod +x $CATALINA_HOME/bin/*.sh && \
-  cd $LIFERAY_HOME && mkdir patching-tool && cd patching-tool && touch default.properties && \
-  echo "patching.mode=binary\n\
+  if [ -d $LIFERAY_HOME/patching-tool ]; then \
+      echo "patching.mode=binary\n\
 war.path=$LIFERAY_HOME/tomcat/webapps/ROOT/\n\
 global.lib.path=$LIFERAY_HOME/tomcat/lib/ext/\n\
 liferay.home=$LIFERAY_HOME/\n\
-" > $LIFERAY_HOME/patching-tool/default.properties && \
+" > $LIFERAY_HOME/patching-tool/default.properties \
+  ; fi  && \
   chown -R liferay:liferay $LIFERAY_HOME && \
   rm -rf $LIFERAY_HOME/tools && \
   rm -f $CATALINA_HOME/webapps/ROOT/WEB-INF/patching-backup.zip && \
